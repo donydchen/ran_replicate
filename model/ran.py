@@ -118,3 +118,8 @@ class RANModel(BaseModel):
     def get_latest_losses(self):
         get_losses_name = ['dis_fake', 'dis_real', 'recog']
         return super(RANModel, self).get_latest_losses(get_losses_name)
+
+    def get_latest_visuals(self):
+        visuals_name = ['img']
+        return super(RANModel, self).get_latest_visuals(visuals_name)
+        
