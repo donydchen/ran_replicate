@@ -37,6 +37,10 @@ class CKPlusDataset(BaseDataset):
                 pseudo_list.append(cur_list)
         return pseudo_list
 
+    def get_cls_by_path(self, img_path):
+        cls_label = super(CKPlusDataset, self).get_cls_by_path(img_path)
+        return self.EXPRESSION.index(cls_label)
+
     def __getitem__(self, index):
         # load pseudo expression and its AU label
         pseudo_exp = int(self.pseudo_list[index][0])

@@ -6,7 +6,12 @@ A PyTorch re-implementation of Weakly Supervised Facial Action Unit Recognition 
 ## Generate Pseudo AU vectors
 
 ```sh
-cd tools
-python gen_pseudo_au.py --n_sample 100000
+python tools/gen_pseudo_au.py
+```
+
+## Preprocess CK+ dataset 
+
+```sh
+python tools/preprocess_ckplus.py
 ```
 

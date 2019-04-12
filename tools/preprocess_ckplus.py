@@ -5,11 +5,13 @@ Created on Apr 12, 2019
 import os
 import glob
 import pickle
-from .mtcnn import detect_faces
-from .align_face import AlignFace
+from mtcnn import detect_faces
+from align_face import AlignFace
 from PIL import Image
 import cv2
 import random
+import argparse
+import inspect
 
 
 def make_dir_if_not_exist(path):
@@ -28,7 +30,7 @@ class ProcessCKP(object):
     def initialize(self, opt):
         self.raw_img_dir = os.path.join(opt.raw_dir, "cohn-kanade-images")
         assert os.path.isdir(self.raw_img_dir), "Please download CK+ dataset 'cohn-kanade-images.zip' and extract it to %s." % self.raw_img_dir
-        self.raw_label_dir = os.path.join(opt.raw_dir, "Emotion_labels")
+        self.raw_label_dir = os.path.join(opt.raw_dir, "Emotion")
         assert os.path.isdir(self.raw_label_dir), "Please download CK+ dataset 'Emotion_labels.zip' and extract it to %s." % self.raw_label_dir
 
         self.n_folds = opt.n_folds
@@ -70,10 +72,11 @@ class ProcessCKP(object):
 
     def get_image_list(self):
         image_list = []
-        for subject in glob.glob(os.path.join(self.raw_label_dir, '*/')):
+        for subject in glob.glob(os.path.join(self.raw_img_dir, '*/')):
             for clip in glob.glob(os.path.join(subject, '*/')):
                 items = sorted(glob.glob(os.path.join(clip, '*.png')))
                 image_list.extend(items[-3:])
+        print(len(image_list))
         return image_list
 
     def filter_images(self):
@@ -83,13 +86,14 @@ class ProcessCKP(object):
         for image_path in self.image_list:
             image_basename = os.path.basename(image_path)
             cur_key = ('_').join(image_basename.split('_')[:2])
-            if self.label_dict[cur_key] in self.FILTER_EXPRESSIONS:
+            if (cur_key in self.label_dict) and (self.label_dict[cur_key] in self.FILTER_EXPRESSIONS):
                 new_label_dict[image_basename] = self.label_dict[cur_key]
                 new_image_list.append(image_path)
 
+        print(len(new_label_dict.keys()), len(new_image_list))
         return new_label_dict, new_image_list
         
-    def dump_dict_to_pkl(self, saved_path, saved_dict):
+    def dump_dict_to_pkl(self, saved_dict, saved_path):
         with open(saved_path, 'wb') as f:
             pickle.dump(saved_dict, f)
         print("<<< Saved to %s." % saved_path)
@@ -98,13 +102,16 @@ class ProcessCKP(object):
         bbox_landmark_dict = {}
         for img_path in self.image_list:
             print(img_path)
-            cur_img = Image.open(img_path).convert('RGB')
+            try:
+                cur_img = Image.open(img_path).convert('RGB')
+            except:
+                continue
             bbox, landmark = detect_faces(cur_img)
             bbox_landmark_dict[img_path] = [bbox, landmark]
         return bbox_landmark_dict
 
     def algin_all_faces(self):
-        align_face = AlignFace(im_resize=(76, 76))
+        align_face = AlignFace(im_resize=(80, 80))
 
         cnt = 0
         for img_path, value in sorted(self.bbox_landmark_dict.items()):
@@ -164,10 +171,11 @@ class ProcessCKP(object):
 
 def main():
     processCKP = ProcessCKP()
+    cur_file_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--raw_dir', type=str, default='./datasets/CKPlus/RAW', help='raw image dataset dir.')
-    parser.add_argument('--out_dir', type=str, default='./datasets/CKPlus', help='image output dir.')
+    parser.add_argument('--raw_dir', type=str, default=os.path.join(cur_file_path, '../datasets/CKPlus/RAW'), help='raw image dataset dir.')
+    parser.add_argument('--out_dir', type=str, default=os.path.join(cur_file_path, '../datasets/CKPlus'), help='image output dir.')
     parser.add_argument('--n_folds', type=int, default=10, help='number of fold for spliting train and test set.')
     opt = parser.parse_args()
 
