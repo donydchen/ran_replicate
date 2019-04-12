@@ -106,5 +106,4 @@ venv.bak/
 
 # local configure
 sftp-config.json
-datasets
 ckpts

@@ -40,7 +40,9 @@ class GenPseudoAU(object):
         # setup option 
         self.aus_list = sorted(map(lambda x: int(x), list(opt.aus.split(','))))
         self.n_sample = int(opt.n_sample)
-        self.saved_path = opt.saved_path
+        self.saved_path = os.path.join(opt.saved_dir, "pseudo_aus.csv")
+        if not os.path.exists(opt.saved_dir):
+            os.makedirs(opt.saved_dir)
 
     def run(self):
         saved_log = []
@@ -130,7 +132,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--aus', type=str, default='1,2,4,5,6,7,9,12,17,23,24,25', help='AUs vector index.')
     parser.add_argument('--n_sample', type=int, default=200, help='number of sample for per expression.')
-    parser.add_argument('--saved_path', type=str, default="ck_pseudo_aus.csv", help='Save results to saved_path.')
+    parser.add_argument('--saved_dir', type=str, default="./datasets/CKPlus", help='Save results to saved_dir.')
     opt = parser.parse_args()
 
     genPseudoAU.initialize(opt)
