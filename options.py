@@ -22,6 +22,8 @@ class Options(object):
         parser.add_argument('--visdom_env', type=str, default="main", help='visdom env.')
         parser.add_argument('--visdom_port', type=int, default=8097, help='visdom port.')
         parser.add_argument('--visdom_display_id', type=int, default=1, help='set value larger than 0 to display with visdom.')
+        parser.add_argument('--backend_pretrain', action='store_true', help='if specified, use imagenet pretrained for backend.')
+        parser.add_argument('--use_data_augment', action='store_true', help='if specified, input images in order.')
         
         parser.add_argument('--data_root', required=True, help='paths to data set.')
         parser.add_argument('--imgs_dir', type=str, default="imgs", help='path to image')
@@ -81,7 +83,7 @@ class Options(object):
         dataset_name = os.path.basename(opt.data_root.strip('/'))
         # update checkpoint dir
         if opt.mode == 'train' and opt.load_epoch == 0:
-            opt.ckpt_dir = os.path.join(opt.ckpt_dir, dataset_name, opt.model, opt.name)
+            opt.ckpt_dir = os.path.join(opt.ckpt_dir, dataset_name, opt.which_model_netR, opt.name)
             if not os.path.exists(opt.ckpt_dir):
                 os.makedirs(opt.ckpt_dir)
 

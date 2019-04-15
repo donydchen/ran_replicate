@@ -13,8 +13,8 @@ class RANModel(BaseModel):
         super(RANModel, self).initialize(opt)
 
         self.net_recog = model_utils.define_recog(self.opt.img_nc, self.opt.aus_nc, self.opt.which_model_netR, \
-                            init_type=self.opt.init_type, init_gain=self.opt.init_gain, gpu_ids=self.gpu_ids, \
-                            backend_pretrain=self.opt.backend_pretrain)
+                            self.opt.final_size, init_type=self.opt.init_type, init_gain=self.opt.init_gain, \
+                            gpu_ids=self.gpu_ids, backend_pretrain=self.opt.backend_pretrain)
         self.models_name.append('recog')
 
         if self.is_train:
@@ -55,28 +55,40 @@ class RANModel(BaseModel):
         self.gen_aus = self.net_recog(self.img)
 
     def backward_dis(self):
-        # use label to select discriminator...I can't find an efficient way
-        pred_real = []
-        for idx in range(self.pseudo_exp.size[0]):
-            cur_dis = getattr(self, "net_dis%d" % self.pseudo_exp.detach().cpu().int().numpy()[idx])
-            pred_real.append(cur_dis(self.pseudo_aus[idx]))
-        self.loss_dis_real = self.criterionGAN(pred_real, True)
+        # use label to select discriminator
+        self.loss_dis_real = 0
+        for idx in range(self.n_dis):  # seperate batch
+            cur_aus_idx = self.pseudo_exp == idx
+            cur_aus_batch = self.pseudo_aus[cur_aus_idx, :]
+            if len(cur_aus_batch) == 0:
+                continue
+            cur_dis = getattr(self, "net_dis%d" % idx)
+            cur_pred_real = cur_dis(cur_aus_batch)
+            self.loss_dis_real += self.criterionGAN(cur_pred_real, True)
 
-        pred_fake = []
-        for idx in range(self.img_exp.size[0]):
-            cur_dis = getattr(self, "net_dis%d" % self.img_exp.detach().cpu().int().numpy()[idx])
-            pred_fake.append(cur_dis(self.gen_aus[idx].detach()))  # stop backward to recognition net
-        self.loss_dis_fake = self.criterionGAN(pred_fake, False)
+        self.loss_dis_fake = 0
+        for idx in range(self.n_dis):
+            cur_gen_aus_idx = self.img_exp == idx
+            cur_gen_aus_batch = self.gen_aus[cur_gen_aus_idx, :]
+            if len(cur_gen_aus_batch) == 0:
+                continue
+            cur_dis = getattr(self, "net_dis%d" % idx)
+            cur_pred_fake = cur_dis(cur_gen_aus_batch.detach())  # stop backward to recognition net
+            self.loss_dis_fake += self.criterionGAN(cur_pred_fake, False)
 
         self.loss_dis = self.loss_dis_real + self.loss_dis_fake
         self.loss_dis.backward()
 
     def backward_recog(self):
-        pred_fake = []
-        for idx in range(self.img_exp.size[0]):
-            cur_dis = getattr(self, "net_dis%d" % self.img_exp.detach().cpu().int().numpy()[idx])
-            pred_fake.append(cur_dis(self.gen_aus[idx]))
-        self.loss_recog = self.criterionGAN(pred_fake, True)
+        self.loss_recog = 0
+        for idx in range(self.n_dis):
+            cur_gen_aus_idx = self.img_exp == idx
+            cur_gen_aus_batch = self.gen_aus[cur_gen_aus_idx, :]
+            if len(cur_gen_aus_batch) == 0:
+                continue
+            cur_dis = getattr(self, "net_dis%d" % idx)
+            cur_gen_pred = cur_dis(cur_gen_aus_batch)  
+            self.loss_recog += self.criterionGAN(cur_gen_pred, True)
 
         self.loss_recog.backward()
 
@@ -85,18 +97,18 @@ class RANModel(BaseModel):
         # update discriminator
         for idx in range(self.n_dis):
             self.set_requires_grad(getattr(self, "net_dis%d" % idx), True)
-            getattr(self, "net_dis%d" % idx).zero_grad()
+            getattr(self, "optim_dis%d" % idx).zero_grad()
         self.backward_dis()
         for idx in range(self.n_dis):
-            getattr(self, "net_dis%d" % idx).step()
+            getattr(self, "optim_dis%d" % idx).step()
 
         # update recognition net if needed
         if train_recog:
             for idx in range(self.n_dis):
                 self.set_requires_grad(getattr(self, "net_dis%d" % idx), False)
-            self.net_recog.zero_grad()
+            self.optim_recog.zero_grad()
             self.backward_recog()
-            self.net_recog.step()
+            self.optim_recog.step()
                   
     def save_ckpt(self, epoch):
         save_models_name = ['recog']

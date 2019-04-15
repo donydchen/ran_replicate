@@ -1,5 +1,6 @@
 from .base_dataset import BaseDataset
 import os
+import numpy as np
 
 
 class CKPlusDataset(BaseDataset):
@@ -11,9 +12,9 @@ class CKPlusDataset(BaseDataset):
         return "CKPlusDataset"
 
     def initialize(self, opt):
-        super(CKPlusDataset, self).initialize(opt)
         self.EXPRESSION = ['Anger', 'Disgust', 'Fear', 'Happiness', 'Sadness', 'Surprise']
-
+        super(CKPlusDataset, self).initialize(opt)
+        
     def load_image(self, imgs_dir, imgs_name_file):
         imgs = []
         assert os.path.isfile(imgs_name_file), "File '%s' does not exist." % imgs_name_file
@@ -44,7 +45,7 @@ class CKPlusDataset(BaseDataset):
     def __getitem__(self, index):
         # load pseudo expression and its AU label
         pseudo_exp = int(self.pseudo_list[index][0])
-        pseudo_aus = self.pseudo_list[index][1]
+        pseudo_aus = np.array(self.pseudo_list[index][1])
 
         # load image and its expression label 
         img_path = self.imgs_path[index]

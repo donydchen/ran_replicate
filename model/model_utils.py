@@ -60,7 +60,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[], backend_pretra
     return net
 
 
-def define_recog(input_nc, output_nc, which_model_netR, init_type='normal', init_gain=0.02, gpu_ids=[], backend_pretrain=False):
+def define_recog(input_nc, n_classes, which_model_netR, image_size, init_type='normal', init_gain=0.02, gpu_ids=[], backend_pretrain=False):
     net_recog = None
     if which_model_netR == 'default':
         net_recog = RecognitionNet(input_nc, n_classes, image_size)

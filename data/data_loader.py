@@ -22,7 +22,7 @@ class DataLoader:
     def create_datase(self):
         # specify which dataset to load here
         loaded_dataset = os.path.basename(self.opt.data_root.strip('/')).lower()
-        if 'ck' in loaded_dataset
+        if 'ck' in loaded_dataset:
             dataset = CKPlusDataset()
         else:
             dataset = BaseDataset()
