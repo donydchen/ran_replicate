@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import init
 from torch.optim import lr_scheduler
+import torchvision.models as torch_models
 
 
 '''
@@ -60,17 +61,44 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[], backend_pretra
     return net
 
 
+model_urls = {
+    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
+    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
+    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
+    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
+}
+
+def custom_resnet(model_name='resnet18', pretrained=False, **kwargs):
+    if pretrained and 'num_classes' in kwargs and kwargs['num_classes'] != 1000:
+        # patch n_classes params
+        n_classes = kwargs['num_classes']
+        kwargs['num_classes'] = 1000
+
+        model = getattr(torch_models, model_name)(**kwargs)
+        pretrained_state_dict = torch.utils.model_zoo.load_url(model_urls[model_name])
+        # load only existing feature
+        pretrained_dict = {k: v for k, v in pretrained_state_dict.items() if k in model.state_dict()}
+        model.load_state_dict(pretrained_dict)
+        print("[Info] Successfully load ImageNet pretrained parameters for %s." % model_name)
+        # update fc layer
+        print("Predict Class Number:", n_classes)
+        model.fc = nn.Linear(pretrained_state_dict['fc.weight'].size(1), n_classes)
+        init.xavier_normal_(model.fc.weight.data, 0.02)
+        init.constant_(model.fc.bias.data, 0.0)
+    else:
+        model = getattr(torch_models, model_name)(pretrained, **kwargs)
+
+    return model
+
+
 def define_recog(input_nc, n_classes, which_model_netR, image_size, init_type='normal', init_gain=0.02, gpu_ids=[], backend_pretrain=False):
     net_recog = None
     if which_model_netR == 'default':
         net_recog = RecognitionNet(input_nc, n_classes, image_size)
-    elif which_model_netR == 'resnet50':
+    elif 'resnet' in which_model_netR:
         # input size 224
-        net_recog = torch_models.resnet50(pretrained=backend_pretrain, num_classes=n_classes)
-    elif which_model_netR == 'resnet152':
-        net_recog = torch_models.resnet152(pretrained=backend_pretrain, num_classes=n_classes)
-    elif which_model_netR == 'densenet121':
-        net_recog = torch_models.densenet121(pretrained=backend_pretrain, num_classes=n_classes)
+        net_recog = custom_resnet(which_model_netR, pretrained=backend_pretrain, num_classes=n_classes)
     else:
         raise NotImplementedError('Recognition model [%s] is not implemented' % which_model_netR)
     return init_net(net_recog, init_type, init_gain, gpu_ids, backend_pretrain)

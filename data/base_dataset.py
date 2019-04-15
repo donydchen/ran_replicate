@@ -57,13 +57,13 @@ class BaseDataset(torch.utils.data.Dataset):
         cls_label = self.cls_dict[img_name]
         return cls_label
 
-    def img_transform(self, img, use_data_augment=False):
+    def img_transform(self, img, no_data_augment=False):
         img2tensor = transforms.Compose([transforms.ToTensor(),
                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
         img = transforms.functional.resize(img, self.opt.load_size)
         # on-the-fly data augmentation
-        if self.opt.mode == "train" and use_data_augment:
+        if self.opt.mode == "train" and not no_data_augment:
             # scale and crop 
             # lucky_num = random.randint(0, 4)
             lucky_num_crop = random.randint(0, 4)

@@ -50,7 +50,7 @@ class CKPlusDataset(BaseDataset):
         # load image and its expression label 
         img_path = self.imgs_path[index]
         img_exp = int(self.get_cls_by_path(img_path))
-        img_tensor = self.img_transform(self.get_img_by_path(img_path), self.opt.use_data_augment)
+        img_tensor = self.img_transform(self.get_img_by_path(img_path), self.opt.no_data_augment)
 
         data_dict = {'pseudo_aus': pseudo_aus, 'pseudo_exp': pseudo_exp,
                      'img_exp': img_exp, 'img': img_tensor}

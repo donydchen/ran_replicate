@@ -23,7 +23,7 @@ class Options(object):
         parser.add_argument('--visdom_port', type=int, default=8097, help='visdom port.')
         parser.add_argument('--visdom_display_id', type=int, default=1, help='set value larger than 0 to display with visdom.')
         parser.add_argument('--backend_pretrain', action='store_true', help='if specified, use imagenet pretrained for backend.')
-        parser.add_argument('--use_data_augment', action='store_true', help='if specified, input images in order.')
+        parser.add_argument('--no_data_augment', action='store_true', help='if specified, do not use data augmentation.')
         
         parser.add_argument('--data_root', required=True, help='paths to data set.')
         parser.add_argument('--imgs_dir', type=str, default="imgs", help='path to image')
@@ -46,7 +46,6 @@ class Options(object):
         parser.add_argument('--log_file', type=str, default="logs.txt", help='log loss')
         parser.add_argument('--opt_file', type=str, default="opt.txt", help='options file')
 
-        # train options 
         parser.add_argument('--img_nc', type=int, default=3, help='image number of channel')
         parser.add_argument('--aus_nc', type=int, default=12, help='aus number of channel')
         parser.add_argument('--exp_nc', type=int, default=6, help='number of expression')
@@ -63,15 +62,15 @@ class Options(object):
         parser.add_argument('--lr_decay_iters', type=int, default=50, help='multiply by a gamma every lr_decay_iters iterations')
 
         parser.add_argument('--epoch_count', type=int, default=1, help='the starting epoch count, we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>, ...')
-        parser.add_argument('--niter', type=int, default=20, help='# of iter at starting learning rate')
-        parser.add_argument('--niter_decay', type=int, default=10, help='# of iter to linearly decay learning rate to zero')
+        parser.add_argument('--niter', type=int, default=150, help='# of iter at starting learning rate')
+        parser.add_argument('--niter_decay', type=int, default=150, help='# of iter to linearly decay learning rate to zero')
         
         # frequency options
         parser.add_argument('--train_recog_iter', type=int, default=1, help='train G every n interations.')
         parser.add_argument('--print_losses_freq', type=int, default=100, help='print log every print_freq step.')
-        parser.add_argument('--plot_losses_freq', type=int, default=20000, help='plot log every plot_freq step.')
-        parser.add_argument('--sample_img_freq', type=int, default=2000, help='draw image every sample_img_freq step.')
-        parser.add_argument('--save_epoch_freq', type=int, default=2, help='save checkpoint every save_epoch_freq epoch.')
+        parser.add_argument('--plot_losses_freq', type=int, default=500, help='plot log every plot_freq step.')
+        parser.add_argument('--sample_img_freq', type=int, default=200, help='draw image every sample_img_freq step.')
+        parser.add_argument('--save_epoch_freq', type=int, default=50, help='save checkpoint every save_epoch_freq epoch.')
         
         return parser
 
