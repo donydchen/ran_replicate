@@ -34,6 +34,11 @@ class BaseDataset(torch.utils.data.Dataset):
         cls_pkl = os.path.join(self.opt.data_root, self.opt.cls_pkl)
         self.cls_dict = self.load_dict(cls_pkl)
 
+        # load AUs vector in testing 
+        if not self.is_train:
+            aus_pkl = os.path.join(self.opt.data_root, self.opt.aus_pkl)
+            self.aus_dict = self.load_dict(aus_pkl)
+
     def load_image(self, imgs_dir, imgs_name_file):
         return None
 
@@ -56,6 +61,12 @@ class BaseDataset(torch.utils.data.Dataset):
         assert img_name in self.cls_dict, "Cannot find label for %s" % img_name
         cls_label = self.cls_dict[img_name]
         return cls_label
+
+    def get_aus_by_path(self, img_path):
+        img_name = os.path.basename(img_path)
+        assert img_name in self.aus_dict, "Cannot find AUs vector for %s" % img_name
+        aus_label = self.aus_dict[img_name]
+        return aus_label
 
     def img_transform(self, img, no_data_augment=False):
         img2tensor = transforms.Compose([transforms.ToTensor(),

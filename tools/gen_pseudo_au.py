@@ -132,7 +132,7 @@ def main():
     cur_file_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--aus', type=str, default='1,2,4,5,6,7,9,12,17,23,24,25', help='AUs vector index.')
+    parser.add_argument('--aus', type=str, default='1,2,4,5,6,7,9,12,17,23,25', help='AUs vector index.')
     parser.add_argument('--n_sample', type=int, default=10000, help='number of sample for per expression.')
     parser.add_argument('--saved_dir', type=str, default=os.path.join(cur_file_path, "../datasets/CKPlus"), help='Save results to saved_dir.')
     opt = parser.parse_args()

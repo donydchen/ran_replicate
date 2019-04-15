@@ -96,5 +96,17 @@ class Solver(object):
                 self.visual.display_online_results(cur_vis, epoch)                
             
     def test_networks(self):
-        pass
+        self.init_test_setting(self.opt)
+        self.test_ops()
+
+    def init_test_setting(self):
+        self.test_dataset = create_dataloader(self.opt)
+        self.test_model = create_model(self.opt)
+
+    def test_ops(self):
+        for batch_idx, batch in enumerate(self.test_dataset):
+            with torch.no_grad():
+
+                self.test_model.feed_batch(batch)
+                self.test_model.forward()
         

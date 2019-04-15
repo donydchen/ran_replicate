@@ -55,6 +55,11 @@ class CKPlusDataset(BaseDataset):
         data_dict = {'pseudo_aus': pseudo_aus, 'pseudo_exp': pseudo_exp,
                      'img_exp': img_exp, 'img': img_tensor}
 
+        # load image AUs in testing
+        if not self.is_train:
+            img_aus = np.array(self.get_aus_by_path(img_path))
+            data_dict['img_aus': img_aus]
+
         return data_dict
 
 

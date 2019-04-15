@@ -47,7 +47,7 @@ class Options(object):
         parser.add_argument('--opt_file', type=str, default="opt.txt", help='options file')
 
         parser.add_argument('--img_nc', type=int, default=3, help='image number of channel')
-        parser.add_argument('--aus_nc', type=int, default=12, help='aus number of channel')
+        parser.add_argument('--aus_nc', type=int, default=11, help='aus number of channel')
         parser.add_argument('--exp_nc', type=int, default=6, help='number of expression')
         parser.add_argument('--which_model_netR', type=str, default='default', help='Mode of recognition net. [default|resnet50|resnet152]')
         parser.add_argument('--hidden_nc_list', type=str, default='240,240', help='discriminator hidden layer number of channel')
