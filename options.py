@@ -24,13 +24,15 @@ class Options(object):
         parser.add_argument('--visdom_display_id', type=int, default=1, help='set value larger than 0 to display with visdom.')
         parser.add_argument('--backend_pretrain', action='store_true', help='if specified, use imagenet pretrained for backend.')
         parser.add_argument('--no_data_augment', action='store_true', help='if specified, do not use data augmentation.')
-        
+        parser.add_argument('--no_test_eval', action='store_true', help='do not use eval mode during test time.')
+
         parser.add_argument('--data_root', required=True, help='paths to data set.')
         parser.add_argument('--imgs_dir', type=str, default="imgs", help='path to image')
-        parser.add_argument('--train_csv', type=str, default="train_ids.csv", help='train images paths')
-        parser.add_argument('--test_csv', type=str, default="test_ids.csv", help='test images paths')
+        parser.add_argument('--train_csv', type=str, default="train_ids_1.csv", help='train images paths')
+        parser.add_argument('--test_csv', type=str, default="test_ids_1.csv", help='test images paths')
         parser.add_argument('--pseudo_csv', type=str, default="pseudo_aus.csv", help='Pseudo AUs.')
         parser.add_argument('--cls_pkl', type=str, default="emotion_labels.pkl", help='facial expression labels for images.')
+        parser.add_argument('--aus_pkl', type=str, default="aus_openface.pkl", help='action units ground truth for test.')
 
         parser.add_argument('--batch_size', type=int, default=25, help='input batch size.')
         parser.add_argument('--serial_batches', action='store_true', help='if specified, input images in order.')
@@ -42,6 +44,7 @@ class Options(object):
 
         parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids, eg. 0,1,2; -1 for cpu.')
         parser.add_argument('--ckpt_dir', type=str, default='./ckpts', help='directory to save check points.')
+        parser.add_argument('--result_dir', type=str, default='./results', help='directory to save test results.')
         parser.add_argument('--load_epoch', type=int, default=0, help='load epoch; 0: do not load')
         parser.add_argument('--log_file', type=str, default="logs.txt", help='log loss')
         parser.add_argument('--opt_file', type=str, default="opt.txt", help='options file')
@@ -89,9 +92,9 @@ class Options(object):
         # if test, disable visdom, update results path
         if opt.mode == "test":
             opt.visdom_display_id = 0
-            opt.results = os.path.join(opt.results, "%s_%s_%s" % (dataset_name, opt.which_model_netR, opt.load_epoch))
-            if not os.path.exists(opt.results):
-                os.makedirs(opt.results)
+            opt.result_dir = os.path.join(opt.result_dir, "%s_%s_%s" % (dataset_name, opt.which_model_netR, opt.load_epoch))
+            if not os.path.exists(opt.result_dir):
+                os.makedirs(opt.result_dir)
 
         # set gpu device
         str_ids = opt.gpu_ids.split(',')

@@ -66,6 +66,7 @@ class BaseDataset(torch.utils.data.Dataset):
         img_name = os.path.basename(img_path)
         assert img_name in self.aus_dict, "Cannot find AUs vector for %s" % img_name
         aus_label = self.aus_dict[img_name]
+        # print("aus_label:", aus_label, type(aus_label))
         return aus_label
 
     def img_transform(self, img, no_data_augment=False):

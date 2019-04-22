@@ -58,7 +58,8 @@ class CKPlusDataset(BaseDataset):
         # load image AUs in testing
         if not self.is_train:
             img_aus = np.array(self.get_aus_by_path(img_path))
-            data_dict['img_aus': img_aus]
+            # print("img_aus", img_aus, type(img_aus))
+            data_dict['img_aus'] = img_aus
 
         return data_dict
 

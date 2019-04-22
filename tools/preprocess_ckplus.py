@@ -14,6 +14,9 @@ import argparse
 import inspect
 
 
+
+
+
 def make_dir_if_not_exist(path):
     if not os.path.exists(path):
         os.makedirs(path)
@@ -38,8 +41,11 @@ class ProcessCKP(object):
         self.out_img_dir = make_dir_if_not_exist(os.path.join(self.out_root_dir, "imgs"))
         self.saved_label_path = os.path.join(self.out_root_dir, "emotion_labels.pkl")
         self.saved_bbox_landmark_path = os.path.join(self.out_root_dir, "bbox_landmark_mtcnn.pkl")
-        self.train_ids_csv = os.path.join(self.out_root_dir, "train_ids.csv")
-        self.test_ids_csv = os.path.join(self.out_root_dir, "test_ids.csv")
+
+        self.is_debug = opt.is_debug
+        if self.is_debug:
+            with open(os.path.join(self.out_root_dir, "aus_openface_bak.pkl"), 'rb') as f:
+                self.aus_dict = pickle.load(f, encoding='latin1')
 
     def run(self):
         print(">>> Start preprocessing CK+ dataset.")
@@ -133,40 +139,43 @@ class ProcessCKP(object):
 
     def split_dataset(self):
         """
-        Split dataset into train and test set, without overlap between object
+        Split dataset into train and test set, subject-independent
         """
         # store images based on their subjects
         label_imgs_dict = {}
         for img_path in sorted(glob.glob(os.path.join(self.out_img_dir, '*.png'))):
             img_name = os.path.basename(img_path)
+            if self.is_debug and (not img_name in self.aus_dict):
+                print("Cannot find AUs of %s." % img_name)
+                continue
             subject_name = img_name.split('_')[0]
             if not subject_name in label_imgs_dict:
                 label_imgs_dict[subject_name] = []
             label_imgs_dict[subject_name].append(img_name)
 
-        # split subject into 10 equal folds
+        # split subject into 5 equal folds
         subjects = sorted(list(label_imgs_dict.keys()))
         division = len(subjects) / float(self.n_folds)
         subjects_folds = [subjects[int(round(division * i)): int(round(division * (i + 1)))] for i in range(self.n_folds)]
 
-        # randomly select a fold as test fold
-        test_subjects = subjects_folds[random.randint(0, self.n_folds - 1)]
-        train_list = []
-        test_list = []
-        for k, v in label_imgs_dict.items():
-            if k in test_subjects:
-                test_list.extend(v)
-            else:
-                train_list.extend(v)
+        # select one fold as test fold
+        for idx in range(self.n_folds):
+            test_subjects = subjects_folds[idx]
+            train_list = []
+            test_list = []
+            for k, v in label_imgs_dict.items():
+                if k in test_subjects:
+                    test_list.extend(v)
+                else:
+                    train_list.extend(v)
 
-        with open(self.train_ids_csv, 'w') as f:
-            f.write('\n'.join(sorted(train_list)))
-        with open(self.test_ids_csv, 'w') as f:
-            f.write('\n'.join(sorted(test_list)))
-        print("<<< Successully split dataset, L(%d). Train: S(%d)L(%d); Test: S(%d)L(%d)" % \
-            (len(train_list) + len(test_list), len(subjects)-len(test_subjects), len(train_list), 
-                len(test_subjects), len(test_list)))
-
+            with open(os.path.join(self.out_root_dir, "train_ids_%d.csv" % idx), 'w') as f:
+                f.write('\n'.join(sorted(train_list)))
+            with open(os.path.join(self.out_root_dir, "test_ids_%d.csv" % idx), 'w') as f:
+                f.write('\n'.join(sorted(test_list)))
+            print("<<< [Fold %d] Successully split dataset, L(%d). Train: S(%d)L(%d); Test: S(%d)L(%d)" % \
+                (idx, len(train_list) + len(test_list), len(subjects)-len(test_subjects), len(train_list), 
+                    len(test_subjects), len(test_list)))
 
 
 def main():
@@ -176,7 +185,8 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--raw_dir', type=str, default=os.path.join(cur_file_path, '../datasets/CKPlus/RAW'), help='raw image dataset dir.')
     parser.add_argument('--out_dir', type=str, default=os.path.join(cur_file_path, '../datasets/CKPlus'), help='image output dir.')
-    parser.add_argument('--n_folds', type=int, default=10, help='number of fold for spliting train and test set.')
+    parser.add_argument('--n_folds', type=int, default=5, help='number of fold for spliting train and test set.')
+    parser.add_argument('--is_debug', action='store_true', help='Use debug mode.')
     opt = parser.parse_args()
 
     processCKP.initialize(opt)

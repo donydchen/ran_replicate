@@ -50,6 +50,8 @@ class RANModel(BaseModel):
             self.img_exp = batch['img_exp'].to(self.device)
             self.pseudo_exp = batch['pseudo_exp'].to(self.device)
             self.pseudo_aus = batch['pseudo_aus'].type(torch.FloatTensor).to(self.device)
+        else:
+            self.img_aus = batch['img_aus'].type(torch.FloatTensor).to(self.device)
 
     def forward(self):
         self.gen_aus = self.net_recog(self.img)

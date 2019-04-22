@@ -23,21 +23,19 @@ class AUSDetector(object):
     def initialize(self, opt):
         self.bin_path = opt.bin_path
         self.img_ext = opt.img_ext
+        self.raw_img_dir = opt.raw_img_dir
 
         self.out_dir = os.path.join(opt.root_dir, 'aus_csv')
         if not os.path.isdir(self.out_dir):
             os.makedirs(self.out_dir)
         self.pkl_path = os.path.join(opt.root_dir, 'aus_openface.pkl')
-        self.imgs_dir = os.path.join(opt.root_dir, 'imgs')
-
+        
         self.FILTER_AUS = sorted(map(lambda x: 'AU%02d' % int(x), list(opt.aus.split(','))))
-        # print(self.FILTER_AUS)
-        # assert False
 
     def run(self):
         total_aus_dict = {}
 
-        imgs_path = sorted(glob.glob(os.path.join(self.imgs_dir, "*.%s" % self.img_ext)))  # [:2]
+        imgs_path = self.get_image_list()  # [:3]
         imgs_len = len(imgs_path)
         total_cost = 0.0
 
@@ -88,6 +86,16 @@ class AUSDetector(object):
         # return current au list
         return aus_dict
 
+    def get_image_list(self):
+        # copy from preprocess_ckplus.py
+        image_list = []
+        for subject in glob.glob(os.path.join(self.raw_img_dir, '*/')):
+            for clip in glob.glob(os.path.join(subject, '*/')):
+                items = sorted(glob.glob(os.path.join(clip, '*.%s' % self.img_ext)))
+                image_list.extend(items[-3:])
+        print(len(image_list))
+        return image_list
+
 
 def main():
     ausDetector = AUSDetector()
@@ -96,8 +104,10 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--bin_path', required=True, help="OpenFace binary path 'FaceLandmarkImg'.")
     parser.add_argument('--aus', type=str, default='1,2,4,5,6,7,9,12,17,23,25', help='AUs vector index.')
-    parser.add_argument('--root_dir', type=str, default=os.path.join(cur_file_path, '../datasets/CKPlus'), help='dataset root dir.')
     parser.add_argument('--img_ext', type=str, default='png', help='Image extension.')
+    parser.add_argument('--raw_img_dir', type=str, default=os.path.join(cur_file_path, '../datasets/CKPlus/RAW/cohn-kanade-images'), help='raw image dataset dir.')
+    parser.add_argument('--root_dir', type=str, default=os.path.join(cur_file_path, '../datasets/CKPlus'), help='dataset root dir.')
+    
     opt = parser.parse_args()
 
     ausDetector.initialize(opt)

@@ -12,6 +12,7 @@ import os
 import torch
 import numpy as np
 from PIL import Image
+from sklearn.metrics import f1_score
 
 
 def create_solver(opt):
@@ -96,17 +97,36 @@ class Solver(object):
                 self.visual.display_online_results(cur_vis, epoch)                
             
     def test_networks(self):
-        self.init_test_setting(self.opt)
+        self.init_test_setting()
         self.test_ops()
+        self.cal_f1_scores()
 
     def init_test_setting(self):
         self.test_dataset = create_dataloader(self.opt)
         self.test_model = create_model(self.opt)
 
     def test_ops(self):
+        real_aus_list = []
+        pred_aus_list = []
         for batch_idx, batch in enumerate(self.test_dataset):
             with torch.no_grad():
 
                 self.test_model.feed_batch(batch)
                 self.test_model.forward()
+
+                real_aus_list.extend(list(self.test_model.img_aus.cpu().float().numpy()))
+                pred_aus_list.extend(list(self.test_model.gen_aus.cpu().float().numpy()))
+
+                print(">>> %d/%d" % (batch_idx, len(self.test_dataset)))
+        
+        self.real_aus = np.array(real_aus_list)
+        self.pred_aus = np.array(pred_aus_list)
+
+    def cal_f1_scores(self):
+        f1_scores_list = []
+        for idx in range(self.opt.aus_nc):
+            cur_real_aus = self.real_aus[:, idx].flatten()
+            cur_pred_aus = self.pred_aus[:, idx].flatten()
+            f1_scores_list.append(f1_score(cur_real_aus, cur_pred_aus))
+        print(f1_scores_list)
         
