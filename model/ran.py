@@ -94,15 +94,16 @@ class RANModel(BaseModel):
 
         self.loss_recog.backward()
 
-    def optimize_paras(self, train_recog=True):
+    def optimize_paras(self, train_recog=True, train_dis=True):
         self.forward()
-        # update discriminator
-        for idx in range(self.n_dis):
-            self.set_requires_grad(getattr(self, "net_dis%d" % idx), True)
-            getattr(self, "optim_dis%d" % idx).zero_grad()
-        self.backward_dis()
-        for idx in range(self.n_dis):
-            getattr(self, "optim_dis%d" % idx).step()
+        # update discriminator 
+        if train_dis:
+            for idx in range(self.n_dis):
+                self.set_requires_grad(getattr(self, "net_dis%d" % idx), True)
+                getattr(self, "optim_dis%d" % idx).zero_grad()
+            self.backward_dis()
+            for idx in range(self.n_dis):
+                getattr(self, "optim_dis%d" % idx).step()
 
         # update recognition net if needed
         if train_recog:

@@ -50,6 +50,9 @@ class Solver(object):
             # save checkpoint if needed
             if epoch % self.opt.save_epoch_freq == 0:
                 self.train_model.save_ckpt(epoch)
+        
+        # save the last epoch
+        self.train_model.save_ckpt(self.epoch_len)
 
     def init_train_setting(self):
         self.train_dataset = create_dataloader(self.opt)
@@ -70,7 +73,8 @@ class Solver(object):
             epoch_steps += self.opt.batch_size
             # train network
             self.train_model.feed_batch(batch)
-            self.train_model.optimize_paras(train_recog=(idx % self.opt.train_recog_iter == 0))
+            self.train_model.optimize_paras(train_recog=(idx % self.opt.train_recog_iter == 0), \
+                                            train_dis=(idx % self.opt.train_dis_iter == 0))
             # print losses
             if self.train_total_steps % self.opt.print_losses_freq == 0:
                 cur_losses = self.train_model.get_latest_losses()
@@ -104,6 +108,7 @@ class Solver(object):
     def init_test_setting(self):
         self.test_dataset = create_dataloader(self.opt)
         self.test_model = create_model(self.opt)
+        self.aus_id_list = list(map(lambda x: "AU%02d" % int(x), list(self.opt.aus_id.split(','))))
 
     def test_ops(self):
         real_aus_list = []
@@ -117,7 +122,7 @@ class Solver(object):
                 real_aus_list.extend(list(self.test_model.img_aus.cpu().float().numpy()))
                 pred_aus_list.extend(list(self.test_model.gen_aus.cpu().float().numpy()))
 
-                print(">>> %d/%d" % (batch_idx, len(self.test_dataset)))
+                print(">>> %d/%d" % (batch_idx * self.opt.batch_size, len(self.test_dataset)))
         
         self.real_aus = np.array(real_aus_list)
         self.pred_aus = np.array(pred_aus_list)
@@ -125,8 +130,18 @@ class Solver(object):
     def cal_f1_scores(self):
         f1_scores_list = []
         for idx in range(self.opt.aus_nc):
-            cur_real_aus = self.real_aus[:, idx].flatten()
-            cur_pred_aus = self.pred_aus[:, idx].flatten()
-            f1_scores_list.append(f1_score(cur_real_aus, cur_pred_aus))
-        print(f1_scores_list)
+            cur_real_aus = self.real_aus[:, idx].flatten().astype(int)
+            cur_pred_aus_raw = self.pred_aus[:, idx].flatten() 
+            cur_pred_aus = (cur_pred_aus_raw > 0.5).astype(int)   # convert to binary array, based on threadhold 0.5, sigmoid function
+            
+            print(">>> %s" % self.aus_id_list[idx])
+            print("cur_real_aus", cur_real_aus.tolist())
+            # print("cur_pred_aus_raw", cur_pred_aus_raw)
+            print("cur_pred_aus", cur_pred_aus.tolist(), "\n")
+
+            f1_scores_list.append(f1_score(cur_real_aus, cur_pred_aus, average='micro'))
+
+        for k, v in zip(self.aus_id_list, f1_scores_list):
+            print("%s: %f" % (k, v))
         
+        print("Avg : %f" % (sum(f1_scores_list) / len(f1_scores_list)))
