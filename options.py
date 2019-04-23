@@ -30,8 +30,8 @@ class Options(object):
 
         parser.add_argument('--data_root', required=True, help='paths to data set.')
         parser.add_argument('--imgs_dir', type=str, default="imgs", help='path to image')
-        parser.add_argument('--train_csv', type=str, default="train_ids_1.csv", help='train images paths')
-        parser.add_argument('--test_csv', type=str, default="test_ids_1.csv", help='test images paths')
+        parser.add_argument('--train_csv', type=str, default="train_ids_0.csv", help='train images paths')
+        parser.add_argument('--test_csv', type=str, default="test_ids_0.csv", help='test images paths')
         parser.add_argument('--pseudo_csv', type=str, default="pseudo_aus.csv", help='Pseudo AUs.')
         parser.add_argument('--cls_pkl', type=str, default="emotion_labels.pkl", help='facial expression labels for images.')
         parser.add_argument('--aus_pkl', type=str, default="aus_openface.pkl", help='action units ground truth for test.')
@@ -88,7 +88,9 @@ class Options(object):
         dataset_name = os.path.basename(opt.data_root.strip('/'))
         # update checkpoint dir
         if opt.mode == 'train' and opt.load_epoch == 0:
-            opt.ckpt_dir = os.path.join(opt.ckpt_dir, dataset_name, opt.which_model_netR, opt.name)
+            tmp_list = os.path.splitext(opt.train_csv)[0].split('_')
+            fold_id = "." if len(tmp_list) < 3 else ("fold_%s" % tmp_list[2])
+            opt.ckpt_dir = os.path.join(opt.ckpt_dir, dataset_name, opt.which_model_netR, fold_id, opt.name)
             if not os.path.exists(opt.ckpt_dir):
                 os.makedirs(opt.ckpt_dir)
 

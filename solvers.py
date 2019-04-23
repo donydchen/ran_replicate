@@ -145,3 +145,7 @@ class Solver(object):
             print("%s: %f" % (k, v))
         
         print("Avg : %f" % (sum(f1_scores_list) / len(f1_scores_list)))
+
+        # log the result to files
+        with open(os.path.join(self.opt.result_dir, "results.csv"), 'a+') as f:
+            f.write("%s, %s\n" % (self.opt.ckpt_dir, ", ".join([str(x) for x in f1_scores_list])))
